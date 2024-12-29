@@ -1,8 +1,9 @@
-# React + Vite
+  This app allows users to check the weather by entering their country and city name.
+  Developed with React, HTML and CSS, it uses Axios to consume a weather API and display
+  accurate information. The project integrates several React hooks to manage data, state
+  and effects, providing a fluid and dynamic interface. The application stands out for 
+  its ease of use and its ability to provide results in real time.
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+  ## Technologies utilisées :
 
-Currently, two official plugins are available:
-
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react/README.md) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+   React, Bootstrap
