@@ -9,6 +9,7 @@
   --shadow-color: rgba(0, 0, 0, 0.2);
   --border-radius: 10px;
   --transition-speed: 0.3s;
+  --spacing: 15px;
 }
 
 * {
@@ -59,9 +60,7 @@ body {
   display: flex;
   flex-direction: column;
   margin-bottom: 25px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border-radius: var(--border-radius);
-  overflow: hidden;
+  gap: var(--spacing);
 }
 
 .search-input {
@@ -72,7 +71,8 @@ body {
   font-size: 1rem;
   color: #333;
   background-color: var(--background-light);
-  border-radius: var(--border-radius) var(--border-radius) 0 0;
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .search-button {
@@ -84,6 +84,8 @@ body {
   cursor: pointer;
   font-weight: bold;
   transition: background-color var(--transition-speed);
+  border-radius: var(--border-radius);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
 .search-button:hover {
