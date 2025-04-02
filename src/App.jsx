@@ -19,7 +19,7 @@ function App() {
     fetch(url)
       .then((response) => {
         if (!response.ok) {
-          throw new Error('Ville non trouvée');
+          throw new Error('City not found');
         }
         return response.json();
       })
@@ -52,12 +52,12 @@ function App() {
   return (
     <div className="app-container">
       <div className="weather-app">
-        <h1 className="app-title">Météo en Direct</h1>
+        <h1 className="app-title">Weather Forecast</h1>
         
         <div className="search-box">
           <input 
             type="text" 
-            placeholder="Entrez une ville..." 
+            placeholder="Enter a city..." 
             value={city} 
             onChange={(e) => setCity(e.target.value)}
             onKeyPress={handleKeyPress}
@@ -68,7 +68,7 @@ function App() {
             className="search-button"
             disabled={loading}
           >
-            {loading ? 'Chargement...' : 'Rechercher'}
+            {loading ? 'Loading...' : 'Search'}
           </button>
         </div>
 
@@ -102,15 +102,15 @@ function App() {
             
             <div className="weather-details">
               <div className="detail-item">
-                <span className="detail-label">Ressenti:</span>
+                <span className="detail-label">Feels like:</span>
                 <span className="detail-value">{weatherInfo.feelsLike}°C</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Humidité:</span>
+                <span className="detail-label">Humidity:</span>
                 <span className="detail-value">{weatherInfo.humidity}%</span>
               </div>
               <div className="detail-item">
-                <span className="detail-label">Vent:</span>
+                <span className="detail-label">Wind:</span>
                 <span className="detail-value">{weatherInfo.wind} km/h</span>
               </div>
             </div>
