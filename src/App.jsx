@@ -6,6 +6,7 @@ function App() {
   const [weatherInfo, setWeatherInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
+  const [view, setView] = useState('main'); // 'main', 'current', 'forecast'
 
   function getWeather() {
     if (!city.trim()) return;
@@ -25,7 +26,8 @@ function App() {
       })
       .then((data) => {
         const weather = {
-          location: `${data.name}, ${data.sys.country}`,
+          location: data.name,
+          country: data.sys.country,
           temperature: Math.round(data.main.temp),
           feelsLike: Math.round(data.main.feels_like),
           humidity: data.main.humidity,
@@ -35,6 +37,7 @@ function App() {
         };
         setWeatherInfo(weather);
         setLoading(false);
+        setView('current');
       })
       .catch((error) => {
         console.error(error);
@@ -49,76 +52,146 @@ function App() {
     }
   }
 
-  return (
-    <div className="app-container">
-      <div className="weather-app">
-        <h1 className="app-title">Weather Forecast</h1>
-        
-        <div className="search-box">
-          <input 
-            type="text" 
-            placeholder="Enter a city..." 
-            value={city} 
-            onChange={(e) => setCity(e.target.value)}
-            onKeyPress={handleKeyPress}
-            className="search-input"
-          />
-          <button 
-            onClick={getWeather} 
-            className="search-button"
-            disabled={loading}
-          >
-            {loading ? 'Loading...' : 'Search'}
-          </button>
+  // Simple forecast data (normally would come from API)
+  const forecastData = [
+    { day: 'Mon', temp: 28, icon: '01d' },
+    { day: 'Tue', temp: 30, icon: '01d' },
+    { day: 'Wed', temp: 29, icon: '02d' },
+    { day: 'Thu', temp: 27, icon: '10d' },
+    { day: 'Fri', temp: 26, icon: '01d' }
+  ];
+
+  const weekForecast = [
+    { day: 'Tomorrow', temp: 30, condition: 'Sunny' },
+    { day: 'Thursday', temp: 28, condition: 'Partly cloudy' },
+    { day: 'Friday', temp: 26, condition: 'Rainy' }
+  ];
+
+  const renderMainView = () => (
+    <div className="welcome-view">
+      <div className="logo-container">
+        <div className="weather-logo">
+          <img src="https://openweathermap.org/img/wn/02d@2x.png" alt="Weather" />
         </div>
+      </div>
+      <h1>Weather<br/>Forecast App</h1>
+      <p>Get real-time weather updates for any location</p>
+      <button className="get-started-btn" onClick={() => setView('search')}>
+        Get Started
+      </button>
+    </div>
+  );
 
-        {error && (
-          <div className="error-message">
-            {error}
-          </div>
-        )}
+  const renderSearchView = () => (
+    <div className="search-view">
+      <div className="back-button" onClick={() => setView('main')}>
+        &larr;
+      </div>
+      <h2>Search Location</h2>
+      <div className="search-box">
+        <input
+          type="text"
+          placeholder="Enter city name"
+          value={city}
+          onChange={(e) => setCity(e.target.value)}
+          onKeyPress={handleKeyPress}
+        />
+        <button onClick={getWeather} disabled={loading}>
+          {loading ? 'Loading...' : 'Search'}
+        </button>
+      </div>
+      {error && <div className="error-message">{error}</div>}
+    </div>
+  );
 
-        {weatherInfo && !error && (
-          <div className="weather-card">
-            <div className="weather-header">
-              <h2>{weatherInfo.location}</h2>
-              {weatherInfo.icon && (
-                <img 
-                  src={`http://openweathermap.org/img/wn/${weatherInfo.icon}@2x.png`} 
-                  alt={weatherInfo.condition}
-                  className="weather-icon"
-                />
-              )}
+  const renderCurrentView = () => (
+    <div className="current-view">
+      <div className="view-header">
+        <div className="back-button" onClick={() => setView('search')}>
+          &larr;
+        </div>
+        <h2>{weatherInfo.location}</h2>
+        <div className="more-menu" onClick={() => setView('forecast')}>
+          &rarr;
+        </div>
+      </div>
+
+      <div className="current-weather">
+        <div className="current-icon">
+          <img 
+            src={`http://openweathermap.org/img/wn/${weatherInfo.icon}@2x.png`}
+            alt={weatherInfo.condition}
+          />
+        </div>
+        <div className="current-temp">{weatherInfo.temperature}°</div>
+        <div className="current-condition">{weatherInfo.condition}</div>
+      </div>
+
+      <div className="forecast-strip">
+        {forecastData.map((day, index) => (
+          <div className="forecast-day" key={index}>
+            <div className="day-name">{day.day}</div>
+            <div className="day-icon">
+              <img 
+                src={`http://openweathermap.org/img/wn/${day.icon}.png`}
+                alt="Weather"
+              />
             </div>
-            
-            <div className="temperature-container">
-              <div className="main-temperature">
-                {weatherInfo.temperature}°C
-              </div>
-              <div className="weather-condition">
-                {weatherInfo.condition}
-              </div>
-            </div>
-            
-            <div className="weather-details">
-              <div className="detail-item">
-                <span className="detail-label">Feels like:</span>
-                <span className="detail-value">{weatherInfo.feelsLike}°C</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Humidity:</span>
-                <span className="detail-value">{weatherInfo.humidity}%</span>
-              </div>
-              <div className="detail-item">
-                <span className="detail-label">Wind:</span>
-                <span className="detail-value">{weatherInfo.wind} km/h</span>
-              </div>
-            </div>
+            <div className="day-temp">{day.temp}°</div>
           </div>
-        )}
+        ))}
       </div>
     </div>
-  )
+  );
+
+  const renderForecastView = () => (
+    <div className="forecast-view">
+      <div className="view-header">
+        <div className="back-button" onClick={() => setView('current')}>
+          &larr;
+        </div>
+        <h2>Weekly forecast</h2>
+      </div>
+
+      <div className="current-location">{weatherInfo.location}</div>
+      
+      <div className="week-forecast">
+        {weekForecast.map((day, index) => (
+          <div className="week-day" key={index}>
+            <div className="week-day-name">{day.day}</div>
+            <div className="week-day-info">
+              <div className="week-day-condition">{day.condition}</div>
+              <div className="week-day-temp">{day.temp}°</div>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+
+  let content;
+  switch(view) {
+    case 'main':
+      content = renderMainView();
+      break;
+    case 'search':
+      content = renderSearchView();
+      break;
+    case 'current':
+      content = weatherInfo ? renderCurrentView() : renderSearchView();
+      break;
+    case 'forecast':
+      content = weatherInfo ? renderForecastView() : renderSearchView();
+      break;
+    default:
+      content = renderMainView();
+  }
+
+  return (
+    <div className="app-container">
+      {content}
+    </div>
+  );
 }
 
 export default App
