@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
 import './App.css'
 
 function App() {
@@ -6,7 +6,6 @@ function App() {
   const [weatherInfo, setWeatherInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('search'); // 'search' or 'dashboard'
   const [forecastData, setForecastData] = useState([]);
   const [hourlyForecast, setHourlyForecast] = useState([]);
 
@@ -55,7 +54,6 @@ function App() {
         setHourlyForecast(hourlyData);
         
         setLoading(false);
-        setView('dashboard');
       })
       .catch((error) => {
         console.error(error);
@@ -108,150 +106,150 @@ function App() {
     return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
   }
 
-  function renderSideNav() {
-    return (
-      <div className="side-nav">
-        <div className="nav-item active">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z"/>
-          </svg>
-        </div>
-        <div className="nav-item">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v8h-2zm0 10h2v2h-2z"/>
-          </svg>
-        </div>
-        <div className="nav-item settings">
-          <svg viewBox="0 0 24 24" width="24" height="24">
-            <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
-          </svg>
-        </div>
-      </div>
-    );
-  }
-
-  function renderDashboard() {
-    if (!weatherInfo) return null;
-    
-    return (
-      <div className="dashboard">
-        {renderSideNav()}
-        
-        <div className="main-content">
-          <div className="section-header">
-            <h2>LATEST SEARCHES</h2>
-          </div>
-          
-          <div className="recent-searches">
-            <div className="search-card">
-              <div className="card-location">
-                <div className="weather-icon">
-                  <img src={`https://openweathermap.org/img/wn/${weatherInfo.icon}.png`} alt="Weather" />
-                </div>
-                <div className="location-name">{weatherInfo.location}</div>
-                <div className="time">{formatCurrentTime()}</div>
-              </div>
-              <div className="temperature">{weatherInfo.temperature}°</div>
-            </div>
-          </div>
-          
-          <div className="section-header">
-            <h2>WEATHER DETAILS</h2>
-          </div>
-          
-          <div className="weather-details">
-            <div className="detail-card">
-              <div className="detail-label">Humidity</div>
-              <div className="detail-value">{weatherInfo.humidity}%</div>
-            </div>
-            <div className="detail-card">
-              <div className="detail-label">Wind</div>
-              <div className="detail-value">{weatherInfo.wind} m/s</div>
-            </div>
-            <div className="detail-card">
-              <div className="detail-label">Feels Like</div>
-              <div className="detail-value">{weatherInfo.feelsLike}°</div>
-            </div>
-          </div>
-          
-          <div className="search-again">
-            <button onClick={() => setView('search')}>Search Another City</button>
-          </div>
-        </div>
-        
-        <div className="detail-panel">
-          <div className="current-weather-header">
-            <div>
-              <h2 className="city-name">{weatherInfo.location}</h2>
-              <div className="current-time">{formatCurrentTime()}</div>
-            </div>
-            <div className="current-temperature">
-              <span className="temp-value">{weatherInfo.temperature}</span>°
-            </div>
-            <div className="current-icon">
-              <img src={`https://openweathermap.org/img/wn/${weatherInfo.icon}@2x.png`} alt="Weather" />
-            </div>
-          </div>
-          
-          <div className="forecast-section">
-            <h3>TODAY'S FORECAST</h3>
-            <div className="hourly-forecast">
-              {hourlyForecast.map((hour, index) => (
-                <div className="hourly-item" key={index}>
-                  <div className="hour">{hour.time}</div>
-                  <div className="weather-icon">
-                    <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} alt="Weather" />
-                  </div>
-                  <div className="temp">{hour.temp}°</div>
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="forecast-section">
-            <h3>{forecastData.length} DAY FORECAST</h3>
-            <div className="days-forecast">
-              {forecastData.map((day, index) => (
-                <div className="day-item" key={index}>
-                  <div className="day-name">{day.day}</div>
-                  <div className="weather-icon">
-                    <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} alt="Weather" />
-                  </div>
-                  <div className="condition">{day.condition}</div>
-                  <div className="temp">{day.temp}°</div>
-                </div>
-              ))}
-            </div>
-          </div>
-        </div>
-      </div>
-    );
-  }
-
-  function renderSearchView() {
-    return (
-      <div className="search-container">
-        <h1>Weather Dashboard</h1>
-        <div className="search-box">
-          <input
-            type="text"
-            placeholder="Enter city name"
-            value={city}
-            onChange={(e) => setCity(e.target.value)}
-            onKeyPress={handleKeyPress}
-          />
-          <button onClick={getWeather} disabled={loading}>
-            {loading ? 'Loading...' : 'Search'}
-          </button>
-        </div>
-        {error && <div className="error-message">{error}</div>}
-      </div>
-    );
-  }
-
   return (
     <div className="app-container">
-      {view === 'search' ? renderSearchView() : renderDashboard()}
+      <div className="unified-weather-app">
+        {/* Header with search */}
+        <div className="app-header">
+          <h1>Weather Dashboard</h1>
+          <div className="search-area">
+            <div className="search-box">
+              <input
+                type="text"
+                placeholder="Enter city name"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                onKeyPress={handleKeyPress}
+              />
+              <button onClick={getWeather} disabled={loading}>
+                {loading ? 
+                  <span className="loading-spinner"></span> : 
+                  <svg viewBox="0 0 24 24" width="24" height="24">
+                    <path fill="currentColor" d="M15.5 14h-.79l-.28-.27C15.41 12.59 16 11.11 16 9.5 16 5.91 13.09 3 9.5 3S3 5.91 3 9.5 5.91 16 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79l5 4.99L20.49 19l-4.99-5zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14z"/>
+                  </svg>
+                }
+              </button>
+            </div>
+            {error && <div className="error-message">{error}</div>}
+          </div>
+        </div>
+
+        {/* Weather content */}
+        {weatherInfo && (
+          <div className="weather-content">
+            {/* Current weather section */}
+            <div className="current-weather">
+              <div className="location-info">
+                <h2>{weatherInfo.location}, {weatherInfo.country}</h2>
+                <p className="current-time">{formatCurrentTime()}</p>
+                <div className="current-condition">{weatherInfo.condition}</div>
+              </div>
+              <div className="temp-display">
+                <div className="temp-icon">
+                  <img src={`https://openweathermap.org/img/wn/${weatherInfo.icon}@2x.png`} alt="Weather" />
+                </div>
+                <div className="temp-value">{weatherInfo.temperature}°C</div>
+              </div>
+            </div>
+
+            {/* Weather details section */}
+            <div className="weather-details-section">
+              <h3>Weather Details</h3>
+              <div className="weather-details">
+                <div className="detail-card">
+                  <div className="detail-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                      <path fill="currentColor" d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm1-13h-2v6h6v-2h-4V7z"/>
+                    </svg>
+                  </div>
+                  <div className="detail-info">
+                    <div className="detail-label">Feels Like</div>
+                    <div className="detail-value">{weatherInfo.feelsLike}°C</div>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                      <path fill="currentColor" d="M12 2c5.52 0 10 4.48 10 10s-4.48 10-10 10S2 17.52 2 12 6.48 2 12 2zm0 18c4.42 0 8-3.58 8-8s-3.58-8-8-8-8 3.58-8 8 3.58 8 8 8zm-1-8c0 .55.45 1 1 1s1-.45 1-1-.45-1-1-1-1 .45-1 1z"/>
+                    </svg>
+                  </div>
+                  <div className="detail-info">
+                    <div className="detail-label">Humidity</div>
+                    <div className="detail-value">{weatherInfo.humidity}%</div>
+                  </div>
+                </div>
+                <div className="detail-card">
+                  <div className="detail-icon">
+                    <svg viewBox="0 0 24 24" width="24" height="24">
+                      <path fill="currentColor" d="M13 5.83l1.88 1.88-1.6 1.6 1.41 1.41 3.02-3.02L12 2h-1v5.03l2 2v-3.2zM5.41 4L4 5.41 10.59 12 5 17.59 6.41 19 11 14.41V22h1l4.29-4.29 2.3 2.29L20 18.59 5.41 4zM13 18.17v-3.76l1.88 1.88L13 18.17z"/>
+                    </svg>
+                  </div>
+                  <div className="detail-info">
+                    <div className="detail-label">Wind</div>
+                    <div className="detail-value">{weatherInfo.wind} m/s</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Hourly forecast section */}
+            {hourlyForecast.length > 0 && (
+              <div className="forecast-section">
+                <h3>Today's Forecast</h3>
+                <div className="hourly-forecast">
+                  {hourlyForecast.map((hour, index) => (
+                    <div className="hourly-item" key={index}>
+                      <div className="hour">{hour.time}</div>
+                      <div className="weather-icon">
+                        <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} alt="Weather" />
+                      </div>
+                      <div className="temp">{hour.temp}°</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* 5-day forecast section */}
+            {forecastData.length > 0 && (
+              <div className="forecast-section">
+                <h3>{forecastData.length}-Day Forecast</h3>
+                <div className="days-forecast">
+                  {forecastData.map((day, index) => (
+                    <div className="day-item" key={index}>
+                      <div className="day-name">{day.day}</div>
+                      <div className="weather-icon">
+                        <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} alt="Weather" />
+                      </div>
+                      <div className="condition">{day.condition}</div>
+                      <div className="temp">{day.temp}°</div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+
+        {!weatherInfo && !loading && (
+          <div className="empty-state">
+            <div className="empty-state-icon">
+              <svg viewBox="0 0 24 24" width="64" height="64">
+                <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v7h-2zm0 9h2v2h-2z"/>
+              </svg>
+            </div>
+            <h2>Search for a city to get started</h2>
+            <p>Enter a city name above to view current weather and forecast</p>
+          </div>
+        )}
+
+        {loading && (
+          <div className="loading-state">
+            <div className="loading-spinner large"></div>
+            <p>Loading weather data...</p>
+          </div>
+        )}
+      </div>
     </div>
   );
 }
