@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import './App.css'
 
 function App() {
@@ -6,7 +6,9 @@ function App() {
   const [weatherInfo, setWeatherInfo] = useState(null);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const [view, setView] = useState('main'); // 'main', 'dashboard'
+  const [view, setView] = useState('search'); // 'search' or 'dashboard'
+  const [forecastData, setForecastData] = useState([]);
+  const [hourlyForecast, setHourlyForecast] = useState([]);
 
   function getWeather() {
     if (!city.trim()) return;
@@ -15,9 +17,11 @@ function App() {
     setError(null);
     
     const apiKey = '18d2d9e6fbfca85fc00904fef86000b1';
-    const url = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+    const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?q=${city}&units=metric&appid=${apiKey}`;
+    const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?q=${city}&units=metric&appid=${apiKey}`;
     
-    fetch(url)
+    // Get current weather
+    fetch(weatherUrl)
       .then((response) => {
         if (!response.ok) {
           throw new Error('City not found');
@@ -36,6 +40,20 @@ function App() {
           icon: data.weather[0].icon
         };
         setWeatherInfo(weather);
+        
+        // Now get forecast data
+        return fetch(forecastUrl);
+      })
+      .then(response => response.json())
+      .then(data => {
+        // Process forecast data
+        const dailyData = processDailyForecast(data.list);
+        setForecastData(dailyData);
+        
+        // Process hourly data (next 24 hours)
+        const hourlyData = processHourlyForecast(data.list.slice(0, 8));
+        setHourlyForecast(hourlyData);
+        
         setLoading(false);
         setView('dashboard');
       })
@@ -46,186 +64,194 @@ function App() {
       });
   }
 
+  // Process forecast data to get daily forecasts
+  function processDailyForecast(forecastList) {
+    const dailyMap = {};
+    
+    forecastList.forEach(item => {
+      const date = new Date(item.dt * 1000);
+      const day = date.toLocaleDateString('en-US', { weekday: 'short' });
+      
+      if (!dailyMap[day] || date.getHours() === 12) {
+        dailyMap[day] = {
+          day: day,
+          temp: Math.round(item.main.temp),
+          icon: item.weather[0].icon,
+          condition: item.weather[0].description
+        };
+      }
+    });
+    
+    return Object.values(dailyMap).slice(0, 5);
+  }
+  
+  // Process hourly forecast data
+  function processHourlyForecast(hourlyList) {
+    return hourlyList.map(item => {
+      const date = new Date(item.dt * 1000);
+      return {
+        time: date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
+        temp: Math.round(item.main.temp),
+        icon: item.weather[0].icon
+      };
+    });
+  }
+
   function handleKeyPress(e) {
     if (e.key === 'Enter') {
       getWeather();
     }
   }
 
-  // Mock recent searches data
-  const recentSearches = [
-    { city: 'Madrid', temp: 31, time: '10:25', icon: '01d' },
-    { city: 'Malaga', temp: 33, time: '10:30', icon: '02d' },
-    { city: 'Malachy', temp: 22, time: '10:42', icon: '11d' }
-  ];
+  function formatCurrentTime() {
+    const now = new Date();
+    return now.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' });
+  }
 
-  // Mock hourly forecast data
-  const hourlyForecast = [
-    { time: '9:00 AM', temp: 25, icon: '02d' },
-    { time: '12:00 PM', temp: 28, icon: '01d' },
-    { time: '3:00 PM', temp: 33, icon: '02d' }
-  ];
-
-  // Mock 5-day forecast data
-  const daysForecast = [
-    { day: 'Today', condition: 'Sunny', temp: 33, icon: '01d' },
-    { day: 'Tue', condition: 'Sunny', temp: 31, icon: '01d' },
-    { day: 'Wed', condition: 'Sunny', temp: 27, icon: '01d' }
-  ];
-
-  // Mock favorite cities
-  const suggestions = [
-    { city: 'Madrid', temp: 31, icon: '01d' },
-    { city: 'Malaga', temp: 33, icon: '02d' }
-  ];
-
-  const renderSideNav = () => (
-    <div className="side-nav">
-      <div className="nav-item active">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-          <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M12 2a9 9 0 0 1 9 9c0 4.2-2.8 7.7-6.7 8.8L14 19l-6.7.7C3.4 18.8 1 15 1 11a9 9 0 0 1 9-9zm0 2c-3.9 0-7 3.1-7 7 0 3 1.9 5.6 4.5 6.6l4.5-.5-.5-4.5c2.9-1 5-3.5 5-6.6 0-3.9-3.1-7-7-7z" fill="currentColor"/>
-        </svg>
-      </div>
-      <div className="nav-item">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-          <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M17 6H7c-3.3 0-6 2.7-6 6s2.7 6 6 6h10c3.3 0 6-2.7 6-6s-2.7-6-6-6zm0 10H7c-2.2 0-4-1.8-4-4s1.8-4 4-4h10c2.2 0 4 1.8 4 4s-1.8 4-4 4z" fill="currentColor"/>
-          <circle cx="17" cy="12" r="2" fill="currentColor"/>
-        </svg>
-      </div>
-      <div className="nav-item">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-          <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M12 22C6.5 22 2 17.5 2 12S6.5 2 12 2s10 4.5 10 10-4.5 10-10 10zm0-2c4.4 0 8-3.6 8-8s-3.6-8-8-8-8 3.6-8 8 3.6 8 8 8zm-1-5h2v2h-2v-2zm0-8h2v6h-2V7z" fill="currentColor"/>
-        </svg>
-      </div>
-      <div className="nav-item">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-          <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M19.9 12.66a7.99 7.99 0 0 1-7.9 6.34c-4.42 0-8-3.58-8-8 0-3.54 2.29-6.53 5.47-7.59.4 2.01 2.16 3.53 4.28 3.59 2.09.06 3.85-1.36 4.35-3.31 2.33.69 4.19 2.48 4.98 4.77" fill="currentColor"/>
-        </svg>
-      </div>
-      <div className="nav-item settings">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" width="24" height="24">
-          <path fill="none" d="M0 0h24v24H0z"/>
-          <path d="M9.17 20H4v-8.5l7-7 8.5 8.5-7 7h-3.33zM4 20h16v2H4v-2zm13.9-7.1L12 7l-6.1 6.1L12 19.2l5.9-6.3z" fill="currentColor"/>
-        </svg>
-      </div>
-    </div>
-  );
-
-  const renderDashboard = () => (
-    <div className="dashboard">
-      {renderSideNav()}
-      
-      <div className="main-content">
-        <div className="section-header">
-          <h2>LATEST SEARCHES</h2>
+  function renderSideNav() {
+    return (
+      <div className="side-nav">
+        <div className="nav-item active">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-5-9h10v2H7z"/>
+          </svg>
         </div>
+        <div className="nav-item">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 18c-4.41 0-8-3.59-8-8s3.59-8 8-8 8 3.59 8 8-3.59 8-8 8zm-1-14h2v8h-2zm0 10h2v2h-2z"/>
+          </svg>
+        </div>
+        <div className="nav-item settings">
+          <svg viewBox="0 0 24 24" width="24" height="24">
+            <path fill="currentColor" d="M19.43 12.98c.04-.32.07-.64.07-.98s-.03-.66-.07-.98l2.11-1.65c.19-.15.24-.42.12-.64l-2-3.46c-.12-.22-.39-.3-.61-.22l-2.49 1c-.52-.4-1.08-.73-1.69-.98l-.38-2.65C14.46 2.18 14.25 2 14 2h-4c-.25 0-.46.18-.49.42l-.38 2.65c-.61.25-1.17.59-1.69.98l-2.49-1c-.23-.09-.49 0-.61.22l-2 3.46c-.13.22-.07.49.12.64l2.11 1.65c-.04.32-.07.65-.07.98s.03.66.07.98l-2.11 1.65c-.19.15-.24.42-.12.64l2 3.46c.12.22.39.3.61.22l2.49-1c.52.4 1.08.73 1.69.98l.38 2.65c.03.24.24.42.49.42h4c.25 0 .46-.18.49-.42l.38-2.65c.61-.25 1.17-.59 1.69-.98l2.49 1c.23.09.49 0 .61-.22l2-3.46c.12-.22.07-.49-.12-.64l-2.11-1.65zM12 15.5c-1.93 0-3.5-1.57-3.5-3.5s1.57-3.5 3.5-3.5 3.5 1.57 3.5 3.5-1.57 3.5-3.5 3.5z"/>
+          </svg>
+        </div>
+      </div>
+    );
+  }
+
+  function renderDashboard() {
+    if (!weatherInfo) return null;
+    
+    return (
+      <div className="dashboard">
+        {renderSideNav()}
         
-        <div className="recent-searches">
-          {recentSearches.map((item, index) => (
-            <div className="search-card" key={index}>
+        <div className="main-content">
+          <div className="section-header">
+            <h2>LATEST SEARCHES</h2>
+          </div>
+          
+          <div className="recent-searches">
+            <div className="search-card">
               <div className="card-location">
                 <div className="weather-icon">
-                  <img src={`https://openweathermap.org/img/wn/${item.icon}.png`} alt="Weather" />
+                  <img src={`https://openweathermap.org/img/wn/${weatherInfo.icon}.png`} alt="Weather" />
                 </div>
-                <div className="location-name">{item.city}</div>
-                <div className="time">{item.time}</div>
+                <div className="location-name">{weatherInfo.location}</div>
+                <div className="time">{formatCurrentTime()}</div>
               </div>
-              <div className="temperature">{item.temp}°</div>
+              <div className="temperature">{weatherInfo.temperature}°</div>
             </div>
-          ))}
+          </div>
+          
+          <div className="section-header">
+            <h2>WEATHER DETAILS</h2>
+          </div>
+          
+          <div className="weather-details">
+            <div className="detail-card">
+              <div className="detail-label">Humidity</div>
+              <div className="detail-value">{weatherInfo.humidity}%</div>
+            </div>
+            <div className="detail-card">
+              <div className="detail-label">Wind</div>
+              <div className="detail-value">{weatherInfo.wind} m/s</div>
+            </div>
+            <div className="detail-card">
+              <div className="detail-label">Feels Like</div>
+              <div className="detail-value">{weatherInfo.feelsLike}°</div>
+            </div>
+          </div>
+          
+          <div className="search-again">
+            <button onClick={() => setView('search')}>Search Another City</button>
+          </div>
         </div>
         
-        <div className="section-header">
-          <h2>MORE SUGGESTIONS</h2>
-        </div>
-        
-        <div className="suggestions">
-          {suggestions.map((item, index) => (
-            <div className="suggestion-card" key={index}>
-              <div className="suggestion-location">{item.city}</div>
-              <div className="weather-icon">
-                <img src={`https://openweathermap.org/img/wn/${item.icon}.png`} alt="Weather" />
-              </div>
-              <div className="temperature">{item.temp}°</div>
+        <div className="detail-panel">
+          <div className="current-weather-header">
+            <div>
+              <h2 className="city-name">{weatherInfo.location}</h2>
+              <div className="current-time">{formatCurrentTime()}</div>
             </div>
-          ))}
+            <div className="current-temperature">
+              <span className="temp-value">{weatherInfo.temperature}</span>°
+            </div>
+            <div className="current-icon">
+              <img src={`https://openweathermap.org/img/wn/${weatherInfo.icon}@2x.png`} alt="Weather" />
+            </div>
+          </div>
+          
+          <div className="forecast-section">
+            <h3>TODAY'S FORECAST</h3>
+            <div className="hourly-forecast">
+              {hourlyForecast.map((hour, index) => (
+                <div className="hourly-item" key={index}>
+                  <div className="hour">{hour.time}</div>
+                  <div className="weather-icon">
+                    <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} alt="Weather" />
+                  </div>
+                  <div className="temp">{hour.temp}°</div>
+                </div>
+              ))}
+            </div>
+          </div>
+          
+          <div className="forecast-section">
+            <h3>{forecastData.length} DAY FORECAST</h3>
+            <div className="days-forecast">
+              {forecastData.map((day, index) => (
+                <div className="day-item" key={index}>
+                  <div className="day-name">{day.day}</div>
+                  <div className="weather-icon">
+                    <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} alt="Weather" />
+                  </div>
+                  <div className="condition">{day.condition}</div>
+                  <div className="temp">{day.temp}°</div>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
-      
-      <div className="detail-panel">
-        <div className="current-weather-header">
-          <div>
-            <h2 className="city-name">Malaga</h2>
-            <div className="current-time">10:30 AM</div>
-          </div>
-          <div className="current-temperature">
-            <span className="temp-value">33</span>°
-          </div>
-          <div className="current-icon">
-            <img src="https://openweathermap.org/img/wn/02d@2x.png" alt="Weather" />
-          </div>
-        </div>
-        
-        <div className="forecast-section">
-          <h3>TODAY'S FORECAST</h3>
-          <div className="hourly-forecast">
-            {hourlyForecast.map((hour, index) => (
-              <div className="hourly-item" key={index}>
-                <div className="hour">{hour.time}</div>
-                <div className="weather-icon">
-                  <img src={`https://openweathermap.org/img/wn/${hour.icon}.png`} alt="Weather" />
-                </div>
-                <div className="temp">{hour.temp}°</div>
-              </div>
-            ))}
-          </div>
-        </div>
-        
-        <div className="forecast-section">
-          <h3>3 DAY FORECAST</h3>
-          <div className="days-forecast">
-            {daysForecast.map((day, index) => (
-              <div className="day-item" key={index}>
-                <div className="day-name">{day.day}</div>
-                <div className="weather-icon">
-                  <img src={`https://openweathermap.org/img/wn/${day.icon}.png`} alt="Weather" />
-                </div>
-                <div className="condition">{day.condition}</div>
-                <div className="temp">{day.temp}°</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    </div>
-  );
+    );
+  }
 
-  const renderMainView = () => (
-    <div className="search-container">
-      <h1>Weather Dashboard</h1>
-      <div className="search-box">
-        <input
-          type="text"
-          placeholder="Enter city name"
-          value={city}
-          onChange={(e) => setCity(e.target.value)}
-          onKeyPress={handleKeyPress}
-        />
-        <button onClick={getWeather} disabled={loading}>
-          {loading ? 'Loading...' : 'Search'}
-        </button>
+  function renderSearchView() {
+    return (
+      <div className="search-container">
+        <h1>Weather Dashboard</h1>
+        <div className="search-box">
+          <input
+            type="text"
+            placeholder="Enter city name"
+            value={city}
+            onChange={(e) => setCity(e.target.value)}
+            onKeyPress={handleKeyPress}
+          />
+          <button onClick={getWeather} disabled={loading}>
+            {loading ? 'Loading...' : 'Search'}
+          </button>
+        </div>
+        {error && <div className="error-message">{error}</div>}
       </div>
-      {error && <div className="error-message">{error}</div>}
-    </div>
-  );
+    );
+  }
 
   return (
     <div className="app-container">
-      {view === 'main' ? renderMainView() : renderDashboard()}
+      {view === 'search' ? renderSearchView() : renderDashboard()}
     </div>
   );
 }
