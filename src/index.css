@@ -1,3 +1,20 @@
 .app-container {
   background-color: #242840 !important;
 }
+
+
+body, html {
+  width: 100%;
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  overflow: hidden; /* Empêche le scroll */
+}
+
+.app-container {
+  width: 100vw; /* Pleine largeur */
+  height: 100vh; /* Pleine hauteur */
+  max-width: none; /* Supprime la contrainte de largeur */
+  max-height: none;
+  border-radius: 0; /* Supprime les bords arrondis */
+}
