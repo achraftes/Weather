@@ -8,29 +8,35 @@ function App() {
   const [error, setError] = useState(null);
   const [forecastData, setForecastData] = useState([]);
   const [hourlyForecast, setHourlyForecast] = useState([]);
-  const [unit, setUnit] = useState('metric'); // 'metric' pour Celsius, 'imperial' pour Fahrenheit
+  const [unit, setUnit] = useState('metric');
   const [recentSearches, setRecentSearches] = useState([]);
   const [theme, setTheme] = useState('light');
-  
-  // Effet pour charger les recherches récentes et le thème depuis localStorage
+
   useEffect(() => {
     const savedSearches = localStorage.getItem('recentSearches');
     const savedTheme = localStorage.getItem('theme');
-    
+
     if (savedSearches) {
-      setRecentSearches(JSON.parse(savedSearches));
+      try {
+        const parsed = JSON.parse(savedSearches);
+        const validSearches = parsed.filter(item => 
+          typeof item === 'string' && item.trim().length > 0
+        );
+        setRecentSearches(validSearches.slice(0, 5));
+      } catch (error) {
+        console.error('Error parsing recent searches:', error);
+        localStorage.removeItem('recentSearches');
+      }
     }
-    
+
     if (savedTheme) {
       setTheme(savedTheme);
       document.body.className = savedTheme;
     }
   }, []);
 
-  // API key - Idéalement, cela devrait être dans un fichier .env
   const apiKey = '18d2d9e6fbfca85fc00904fef86000b1';
 
-  // Fonction pour obtenir la position actuelle de l'utilisateur
   function getCurrentLocation() {
     setLoading(true);
     setError(null);
@@ -53,7 +59,6 @@ function App() {
     }
   }
 
-  // Obtenir la météo par coordonnées
   function getWeatherByCoords(lat, lon) {
     const weatherUrl = `https://api.openweathermap.org/data/2.5/weather?lat=${lat}&lon=${lon}&units=${unit}&appid=${apiKey}&lang=fr`;
     const forecastUrl = `https://api.openweathermap.org/data/2.5/forecast?lat=${lat}&lon=${lon}&units=${unit}&appid=${apiKey}&lang=fr`;
@@ -61,7 +66,6 @@ function App() {
     fetchWeatherData(weatherUrl, forecastUrl);
   }
 
-  // Obtenir la météo par nom de ville
   function getWeather() {
     if (!city.trim()) return;
     
@@ -74,9 +78,7 @@ function App() {
     fetchWeatherData(weatherUrl, forecastUrl);
   }
 
-  // Fonction pour récupérer les données météo
   function fetchWeatherData(weatherUrl, forecastUrl) {
-    // Obtenir la météo actuelle
     fetch(weatherUrl)
       .then((response) => {
         if (!response.ok) {
@@ -85,6 +87,10 @@ function App() {
         return response.json();
       })
       .then((data) => {
+        if (!data?.name || typeof data.name !== 'string') {
+          throw new Error('Réponse API invalide - Nom de ville manquant');
+        }
+
         const weather = {
           location: data.name,
           country: data.sys.country,
@@ -100,21 +106,15 @@ function App() {
         };
         setWeatherInfo(weather);
         
-        // Ajouter aux recherches récentes
-        if (data.name) {
-          addToRecentSearches(data.name);
-        }
+        addToRecentSearches(data.name);
         
-        // Maintenant obtenir les données de prévision
         return fetch(forecastUrl);
       })
       .then(response => response.json())
       .then(data => {
-        // Traiter les données de prévision
         const dailyData = processDailyForecast(data.list);
         setForecastData(dailyData);
         
-        // Traiter les données horaires (prochaines 24 heures)
         const hourlyData = processHourlyForecast(data.list.slice(0, 8));
         setHourlyForecast(hourlyData);
         
@@ -127,14 +127,27 @@ function App() {
       });
   }
 
-  // Ajouter à la liste des recherches récentes
   function addToRecentSearches(cityName) {
-    const updatedSearches = [cityName, ...recentSearches.filter(item => item !== cityName)].slice(0, 5);
-    setRecentSearches(updatedSearches);
-    localStorage.setItem('recentSearches', JSON.stringify(updatedSearches));
+    if (typeof cityName !== 'string' || !cityName.trim()) {
+      console.error('Invalid city name:', cityName);
+      return;
+    }
+
+    const cleanedCity = cityName.trim().toLowerCase();
+    
+    setRecentSearches(prev => {
+      const updated = [
+        cleanedCity,
+        ...prev.filter(item => 
+          item.toLowerCase() !== cleanedCity && typeof item === 'string'
+        )
+      ].slice(0, 5);
+      
+      localStorage.setItem('recentSearches', JSON.stringify(updated));
+      return updated;
+    });
   }
 
-  // Traiter les données de prévision pour obtenir les prévisions quotidiennes
   function processDailyForecast(forecastList) {
     const dailyMap = {};
     
@@ -157,7 +170,6 @@ function App() {
     return Object.values(dailyMap).slice(0, 5);
   }
   
-  // Traiter les données de prévision horaire
   function processHourlyForecast(hourlyList) {
     return hourlyList.map(item => {
       const date = new Date(item.dt * 1000);
@@ -169,30 +181,25 @@ function App() {
     });
   }
 
-  // Gérer l'appui sur la touche Entrée
   function handleKeyPress(e) {
     if (e.key === 'Enter') {
       getWeather();
     }
   }
 
-  // Formater l'heure actuelle
   function formatCurrentTime() {
     const now = new Date();
     return now.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
   
-  // Formater l'heure du lever et du coucher du soleil
   function formatSunTime(date) {
     return date.toLocaleTimeString('fr-FR', { hour: '2-digit', minute: '2-digit' });
   }
   
-  // Basculer entre Celsius et Fahrenheit
   function toggleUnit() {
     const newUnit = unit === 'metric' ? 'imperial' : 'metric';
     setUnit(newUnit);
     
-    // Rafraîchir les données météo si nous avons déjà une ville
     if (weatherInfo) {
       setLoading(true);
       if (city) {
@@ -203,7 +210,6 @@ function App() {
     }
   }
   
-  // Basculer le thème
   function toggleTheme() {
     const newTheme = theme === 'light' ? 'dark' : 'light';
     setTheme(newTheme);
@@ -211,12 +217,10 @@ function App() {
     localStorage.setItem('theme', newTheme);
   }
 
-  // Obtenir l'unité de température
   function getTemperatureUnit() {
     return unit === 'metric' ? '°C' : '°F';
   }
   
-  // Obtenir l'unité de vitesse
   function getSpeedUnit() {
     return unit === 'metric' ? 'm/s' : 'mph';
   }
@@ -224,7 +228,6 @@ function App() {
   return (
     <div className={`app-container ${theme}`}>
       <div className="unified-weather-app">
-        {/* En-tête avec recherche et paramètres */}
         <div className="app-header">
           <div className="header-main">
             <h1>Météo</h1>
@@ -266,7 +269,6 @@ function App() {
               </button>
             </div>
             
-            {/* Bouton de recherche plus visible */}
             <button 
               className="search-button-large" 
               onClick={getWeather} 
@@ -275,20 +277,21 @@ function App() {
               {loading ? 'Recherche en cours...' : 'Rechercher'}
             </button>
             
-            {/* Recherches récentes */}
             {recentSearches.length > 0 && (
               <div className="recent-searches">
                 <p>Récentes:</p>
                 {recentSearches.map((item, index) => (
                   <button 
-                    key={index} 
+                    key={`${item}-${index}`}
                     className="recent-search-item"
                     onClick={() => {
-                      setCity(item);
-                      setTimeout(() => getWeather(), 0);
+                      if (typeof item === 'string') {
+                        setCity(item);
+                        setTimeout(() => getWeather(), 0);
+                      }
                     }}
                   >
-                    {item}
+                    {typeof item === 'string' ? item : 'Entrée invalide'}
                   </button>
                 ))}
               </div>
@@ -298,10 +301,8 @@ function App() {
           </div>
         </div>
 
-        {/* Contenu météo */}
         {weatherInfo && (
           <div className="weather-content">
-            {/* Section météo actuelle */}
             <div className="current-weather">
               <div className="location-info">
                 <h2>{weatherInfo.location}, {weatherInfo.country}</h2>
@@ -316,7 +317,6 @@ function App() {
               </div>
             </div>
 
-            {/* Section détails météo */}
             <div className="weather-details-section">
               <h3>Détails météo</h3>
               <div className="weather-details">
@@ -366,7 +366,6 @@ function App() {
                 </div>
               </div>
               
-              {/* Lever et coucher du soleil */}
               <div className="sun-times">
                 <div className="sun-time-item">
                   <div className="sun-time-icon sunrise">
@@ -393,7 +392,6 @@ function App() {
               </div>
             </div>
 
-            {/* Section prévisions horaires */}
             {hourlyForecast.length > 0 && (
               <div className="forecast-section">
                 <h3>Prévisions du jour</h3>
@@ -411,7 +409,6 @@ function App() {
               </div>
             )}
 
-            {/* Section prévisions 5 jours */}
             {forecastData.length > 0 && (
               <div className="forecast-section">
                 <h3>Prévisions {forecastData.length} jours</h3>
