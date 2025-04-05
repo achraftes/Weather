@@ -266,6 +266,15 @@ function App() {
               </button>
             </div>
             
+            {/* Bouton de recherche plus visible */}
+            <button 
+              className="search-button-large" 
+              onClick={getWeather} 
+              disabled={loading}
+            >
+              {loading ? 'Recherche en cours...' : 'Rechercher'}
+            </button>
+            
             {/* Recherches récentes */}
             {recentSearches.length > 0 && (
               <div className="recent-searches">

@@ -16,7 +16,6 @@
   --transition: all 0.3s ease;
 }
 
-
 * {
   margin: 0;
   padding: 0;
@@ -159,6 +158,54 @@ body.dark {
 
 .search-box button:hover {
   background-color: var(--primary-dark);
+}
+
+/* Styles pour le bouton de recherche principal */
+.search-button-large {
+  width: 100%;
+  padding: 14px 20px;
+  background-color: var(--primary);
+  color: var(--text-light);
+  border: none;
+  border-radius: var(--border-radius);
+  font-size: 16px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: var(--transition);
+  margin-top: 15px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+}
+
+.search-button-large:hover {
+  background-color: var(--primary-dark);
+  transform: translateY(-1px);
+  box-shadow: 0 4px 15px rgba(79, 63, 240, 0.3);
+}
+
+.search-button-large:active {
+  transform: translateY(0);
+}
+
+.search-button-large:disabled {
+  background-color: var(--gray-dark);
+  color: var(--text-muted);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
+
+.search-button-large svg {
+  width: 20px;
+  height: 20px;
+}
+
+.search-button-large .loading-spinner {
+  border: 3px solid rgba(255, 255, 255, 0.3);
+  border-top-color: var(--text-light);
+  width: 20px;
+  height: 20px;
 }
 
 .location-button {
